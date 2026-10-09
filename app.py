@@ -1,10 +1,19 @@
 import streamlit as st
+from google import genai
 from PIL import Image
-import time
 
 # 頁面基本設定
 st.set_page_config(page_title="本地端AI垃圾分類系統", page_icon="♻️")
 st.title("♻️ 本地端AI垃圾分類系統")
+
+# 使用你截圖中的 API 金鑰
+API_KEY = "AQ.Ab8RN6L87EoHGo6tjsOVFrVjgh_-kMPigallLC6TF5WglCusgGA"
+
+try:
+    # 使用新版 google-genai 專屬的 Client 初始化方式
+    client = genai.Client(api_key=API_KEY)
+except Exception as e:
+    st.error(f"Client 初始化失敗：{e}")
 
 # 檔案上傳元件
 uploaded_file = st.file_uploader("上傳的照片", type=["jpg", "jpeg", "png"])
@@ -14,23 +23,29 @@ if uploaded_file is not None:
     st.image(image, use_container_width=True)
     
     if st.button("🔍 開始 AI 分析"):
-        with st.spinner("AI 分析中，請稍候..."):
-            # 模擬分析等待時間
-            time.sleep(1.5)
-            
-            # 成功提示框
-            st.success("分析完成！")
-            
-            # 依照你提供的照片格式完整呈現文字內容
-            st.markdown("這張圖片中的主要物品與相關分類說明如下：")
-            
-            st.markdown("1. **物品名稱**：塑膠袋（粉白條紋背心袋／購物袋）")
-            
-            st.markdown("2. **垃圾分類類別**：")
-            st.markdown("   - **乾淨且乾燥**：資源回收 - 塑膠袋類")
-            st.markdown("   - **沾有油污／液體／血水**：一般垃圾")
-            
-            st.markdown("3. **處理建議**：")
-            st.markdown("   - **重複利用（最推薦）**：建議留著作為二次購物袋或家中的垃圾袋使用，延長其壽命。")
-            st.markdown("   - **回收處理（若乾淨）**：必須確保袋內無雜物、無油漬且保持乾燥，可將其鋪平或打結打包後，交給資源回收車。")
-            st.markdown("   - **丟棄處理（若髒污）**：若塑膠袋曾裝過食物、沾有油污或無法徹底沖洗乾淨，請直接當作「一般垃圾」丟棄，以免污染其他回收物。")
+        with st.spinner("AI 正在精準分析中，請稍候..."):
+            try:
+                # 設定符合你排版期望的提示詞
+                prompt = """請仔細辨識這張圖片中的主要物品，並嚴格依照以下結構與排版回覆繁體中文內容：
+
+這張圖片中的主要物品與相關分類說明如下：
+
+1. 物品名稱：[填入具體物品名稱與特徵]
+
+2. 垃圾分類類別：
+   - [列出對應的分類說明]
+
+3. 處理建議：
+   - [條列式說明具體的處理與回收建議]"""
+
+                # 呼叫最新穩定支援的模型進行真實視覺辨識
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=[prompt, image]
+                )
+                
+                st.success("分析完成！")
+                st.markdown(response.text)
+                
+            except Exception as e:
+                st.error(f"分析失敗：{e}")
