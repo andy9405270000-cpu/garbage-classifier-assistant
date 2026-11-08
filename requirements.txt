@@ -1,3 +1,5 @@
 streamlit
-google-genai
-pillow
+ultralytics
+opencv-python-headless
+Pillow
+numpy
